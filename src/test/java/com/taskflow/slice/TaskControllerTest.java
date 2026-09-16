@@ -106,6 +106,20 @@ class TaskControllerTest {
     }
 
     @Test
+    void getUnassigned_retorna200YAssigneeNull() throws Exception {
+        when(taskService.sinResponsable()).thenReturn(List.of(
+                tareaConFecha(4L, "Escribir tests MockMvc", null, LocalDate.now().plusDays(7)),
+                tareaConFecha(6L, "Publicar en la tienda", null, LocalDate.now().plusDays(10))
+        ));
+
+        mockMvc.perform(get("/tasks/unassigned"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].id").value(4))
+                .andExpect(jsonPath("$[0].assigneeId").value(org.hamcrest.Matchers.nullValue()));
+    }
+
+    @Test
     void getTaskPorId_existente_retorna200ConElTitulo() throws Exception {
         when(taskService.buscarPorId(1L)).thenReturn(Optional.of(tarea(1L, "Diseñar esquema de BD", TaskStatus.TODO)));
 
