@@ -67,6 +67,19 @@ public class ProjectController {
     }
 
     /**
+     * GET /projects/{id}/summary — resumen del proyecto: conteos por estado y vencidas.
+     * 404 se maneja igual que en getProject (ProjectNotFoundException).
+     */
+    @Operation(summary = "Resumen del proyecto",
+            description = "Devuelve un resumen con total de tareas, conteo por estado y vencidas.")
+    @GetMapping("/projects/{id}/summary")
+    public com.taskflow.dto.ProjectSummaryResponse getProjectSummary(@PathVariable("id") Long id) {
+        Project proyecto = projectService.buscarPorId(id)
+                .orElseThrow(() -> new ProjectNotFoundException(id));
+        return projectService.resumenDe(proyecto);
+    }
+
+    /**
      * GET /projects/{id}/tasks — las tareas de un proyecto como TaskResponse. Conserva la distinción
      * de D2: proyecto inexistente -> 404 (orElseThrow); proyecto sin tareas -> 200 con []. El filtro
      * ?status= es STRETCH (mismo enum que /tasks). Sigue delegando en ProjectService.tareasDe.
