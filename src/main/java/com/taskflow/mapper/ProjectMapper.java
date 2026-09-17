@@ -22,4 +22,19 @@ public final class ProjectMapper {
         return new ProjectResponse(p.getId(), p.getName(), p.getDescription(),
                 p.getOwnerId(), p.getCreatedAt());
     }
+
+    /**
+     * Convierte un Project y conteos en un ProjectSummaryResponse. Convierte las claves de TaskStatus
+     * a String para el DTO.
+     */
+    public static com.taskflow.dto.ProjectSummaryResponse aSummaryResponse(Project p,
+                                                                           int totalTasks,
+                                                                           java.util.Map<com.taskflow.model.TaskStatus, Integer> byStatus,
+                                                                           int overdue) {
+        java.util.Map<String, Integer> byStatusString = new java.util.HashMap<>();
+        for (com.taskflow.model.TaskStatus s : com.taskflow.model.TaskStatus.values()) {
+            byStatusString.put(s.name(), byStatus.getOrDefault(s, 0));
+        }
+        return new com.taskflow.dto.ProjectSummaryResponse(p.getId(), p.getName(), totalTasks, byStatusString, overdue);
+    }
 }

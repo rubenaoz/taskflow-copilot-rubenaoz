@@ -63,6 +63,25 @@ public class ProjectService {
     }
 
     /**
+     * Construye el resumen de un proyecto: cuenta tareas por estado, total y vencidas.
+     * El controller decide el 404 (buscarPorId) y pasa el Project ya existente.
+     */
+    public com.taskflow.dto.ProjectSummaryResponse resumenDe(Project project) {
+        List<Task> tareas = tareasDe(project.getId());
+        int total = tareas.size();
+        java.util.Map<com.taskflow.model.TaskStatus, Integer> byStatus = new java.util.HashMap<>();
+        for (com.taskflow.model.TaskStatus s : com.taskflow.model.TaskStatus.values()) {
+            byStatus.put(s, 0);
+        }
+        int overdue = 0;
+        for (Task t : tareas) {
+            byStatus.put(t.getStatus(), byStatus.getOrDefault(t.getStatus(), 0) + 1);
+            if (t.estaVencida()) overdue++;
+        }
+        return com.taskflow.mapper.ProjectMapper.aSummaryResponse(project, total, byStatus, overdue);
+    }
+
+    /**
      * Crea un proyecto (POST): el request trae name y description; el ownerId ya NO es una constante
      * (murió el 1L fijo de D3) — se resuelve del USERNAME AUTENTICADO (el que puso el JWT en el
      * Authentication). El dueño no lo decide el cliente ni una semilla: es QUIEN llama. createdAt = hoy;
