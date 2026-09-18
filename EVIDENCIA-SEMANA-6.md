@@ -27,3 +27,35 @@
 
 - **Qué no salió:** en la primera corrida de `verificar-arquitectura.ps1`, el documento generado por el agente citaba una clase que no existía en el proyecto (el verificador la marcó como `NO EXISTE`). Se lo señalé al agente pasándole la línea exacta del reporte del verificador, y corrigió el documento sin tocar nada más; la segunda corrida cerró en 0.
 
+## Día 2 · Especificar, implementar y revisar
+
+- **Qué construí:** `GET /tasks/overdue` y `GET /tasks/unassigned`, cada uno a partir de una spec escrita antes del prompt (`specs/overdue.md`, `specs/unassigned.md`), no de una instrucción de una línea. Para `unassigned` usé `/plan` para revisar el plan del agente antes de dejarlo tocar código. Los dos se fusionaron a `main` por un PR con revisión de Copilot.
+- **Dónde está:** [`specs/overdue.md`](specs/overdue.md) · [`specs/unassigned.md`](specs/unassigned.md) · PR [#1](https://github.com/rubenaoz/taskflow-copilot-rubenaoz/pull/1)
+- **Cómo se comprueba:**
+  - El primer intento del agente en `overdue` **falló el checklist**: creó 11 archivos cuando la spec solo pedía 4 — clases placeholder como `DataSeeder.java`, `SecurityConfig.java`, con comentarios que admitían "si existe" (bandera de que el agente no verificó lo que afirmaba).
+
+    ![Primer intento con archivos fuera de alcance](evidencia/dia2/intento1-archivos-de-mas.png)
+
+  - Descarté ese intento (`git reset HEAD~1`) y repetí. El segundo intento pasó el checklist completo de 6 puntos: 0 líneas borradas de tests existentes, comentarios verificados uno por uno, y una prueba de mutación (quitar `.sorted(TaskOrders.POR_FECHA)` a mano) que rompió los tests correctamente (`BUILD FAILURE`, confirmando que sí hay un test vigilando el orden) — no me creí que "la suite pasa" significara que el cambio estaba bien. El mismo patrón se repitió limpio en `unassigned` a la primera.
+
+    ![Checklist completo: mutación en BUILD FAILURE y suite en verde](evidencia/dia2/checklist-mutacion-failure.png)
+
+  - Para `unassigned` pedí `/plan` antes de implementar. El primer plan generado no especificaba los casos de prueba concretos que pedía la spec — lo rechacé con `4. Suggest changes` señalando exactamente qué faltaba, y el plan corregido sí los incluyó.
+
+    ![Plan corregido con los casos de prueba exactos](evidencia/dia2/plan-corregido.png)
+
+  - Planté un bug a propósito (`isBefore` → `isAfter` en `Task.estaVencida()`) en una rama descartable. La suite lo detectó (2 tests en rojo, `BUILD FAILURE`). Le pedí al agente "los tests fallan, haz que pasen" sin decirle dónde está el bug — corrigió el código de producción (`Task.java +1 -1`), no los tests.
+
+    ![El agente corrige el bug en código de producción, no en tests](evidencia/dia2/bug-corregido-en-produccion.png)
+
+  - Copilot code review en el PR dejó 2 comentarios. Apliqué el que tenía razón (fixtures sin cubrir tareas `DONE` sin responsable) y rechacé el que contradecía la spec (probar el orden en el slice, cuando la spec dice explícitamente que eso se prueba en el unit).
+
+    ![Comentario de Copilot rechazado con motivo](evidencia/dia2/copilot-review-rechazado.png)
+
+  - La prueba final fue la app real corriendo, no mocks: `overdue: 7`, `unassigned: 4, 6`, `sin token: 401` — exactamente lo esperado con la semilla.
+
+    ![La app arrancada confirma los resultados exactos](evidencia/dia2/app-arrancada-comprobacion.png)
+
+  - Evidencia adicional en texto: [`checklist-overdue.txt`](evidencia/dia2/checklist-overdue.txt) · [`comprobacion.txt`](evidencia/dia2/comprobacion.txt) · [`pr.txt`](evidencia/dia2/pr.txt) · [`suite-main.txt`](evidencia/dia2/suite-main.txt) · [`usage.txt`](evidencia/dia2/usage.txt)
+
+- **Qué no salió:** el primer intento de `overdue` se descartó completo por crear archivos fuera del alcance de la spec (arriba). Además, mergeé el PR **antes** de pedir la revisión de Copilot (el orden correcto es al revés) — no afectó el resultado porque atendí los comentarios igual después del merge, pero el flujo quedó invertido respecto a lo que pedía la guía.
