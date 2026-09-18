@@ -90,12 +90,25 @@ index 2bf7830..88bb268 100644
 +                }).toList();
 +    }
  }
+diff --git a/src/test/java/com/taskflow/integration/SecurityRulesTest.java b/src/test/java/com/taskflow/integration/SecurityRulesTest.java
+index ec2d9ed..5ced75f 100644
+--- a/src/test/java/com/taskflow/integration/SecurityRulesTest.java
++++ b/src/test/java/com/taskflow/integration/SecurityRulesTest.java
+@@ -53,7 +53,7 @@ class SecurityRulesTest {
+      * es un test independiente en el reporte; añadir una ruta protegida = añadir un string, no un método.
+      */
+     @ParameterizedTest(name = "GET {0} sin token → 401")
+-    @ValueSource(strings = {"/projects", "/tasks", "/projects/1/tasks"})
++    @ValueSource(strings = {"/projects", "/tasks", "/projects/1/tasks", "/reports/progress"})
+     void rutaProtegida_sinToken_devuelve401(String ruta) throws Exception {
+         mockMvc.perform(get(ruta))
+                 .andExpect(status().isUnauthorized());
 diff --git a/src/test/java/com/taskflow/slice/ProgresoProyectosControllerTest.java b/src/test/java/com/taskflow/slice/ProgresoProyectosControllerTest.java
 new file mode 100644
-index 0000000..68936a2
+index 0000000..4a475f3
 --- /dev/null
 +++ b/src/test/java/com/taskflow/slice/ProgresoProyectosControllerTest.java
-@@ -0,0 +1,48 @@
+@@ -0,0 +1,53 @@
 +package com.taskflow.slice;
 +
 +import com.taskflow.controller.ReportController;
@@ -140,8 +153,13 @@ index 0000000..68936a2
 +        mockMvc.perform(get("/reports/progress").contentType(MediaType.APPLICATION_JSON))
 +                .andExpect(status().isOk())
 +                .andExpect(jsonPath("$[0].projectId").value(1))
++                .andExpect(jsonPath("$[0].projectName").value("Plataforma TaskFlow"))
 +                .andExpect(jsonPath("$[0].percentDone").value(20.0))
-+                .andExpect(jsonPath("$[1].totalTasks").value(4));
++                .andExpect(jsonPath("$[0].doneTasks").value(1))
++                .andExpect(jsonPath("$[1].projectId").value(2))
++                .andExpect(jsonPath("$[1].projectName").value("App Móvil"))
++                .andExpect(jsonPath("$[1].totalTasks").value(4))
++                .andExpect(jsonPath("$[1].doneTasks").value(1));
 +    }
 +}
 diff --git a/src/test/java/com/taskflow/unit/ProgresoProyectosServiceTest.java b/src/test/java/com/taskflow/unit/ProgresoProyectosServiceTest.java
