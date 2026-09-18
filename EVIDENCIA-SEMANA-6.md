@@ -92,3 +92,39 @@
   - Evidencia adicional en texto: [`mcp-list.txt`](evidencia/dia3/mcp-list.txt) · [`aws-knowledge.md`](evidencia/dia3/aws-knowledge.md) · [`aws-auditoria.txt`](evidencia/dia3/aws-auditoria.txt) · [`playwright.md`](evidencia/dia3/playwright.md) · [`playwright-tarea.txt`](evidencia/dia3/playwright-tarea.txt) · [`integrador.md`](evidencia/dia3/integrador.md) · [`conteos.txt`](evidencia/dia3/conteos.txt)
 
 - **Qué no salió:** la respuesta inicial sobre disponibilidad de AWS (arriba) parecía correcta y citaba la herramienta correcta, pero no estaba respaldada por los datos reales que esa herramienta devolvió — el modelo completó de memoria. Es el hallazgo central del día: una herramienta usada no es lo mismo que una herramienta que respalda la respuesta.
+## Día 4 · Skills y agentes
+
+- **Qué construí:** dos skills (`crear-endpoint-taskflow`, `verificar-taskflow`) y tres agentes personalizados (`revisor`, `tester`, `auditor-aws`) en `.github/`. Usé la skill para implementar `GET /projects/{id}/summary` desde el issue del miércoles, el `revisor` para auditar el diff sin poder editar nada, el `tester` para completar los casos de prueba faltantes, y `auditor-aws` con un usuario IAM de solo lectura para revisar mi cuenta de AWS de la Semana 5.
+- **Dónde está:** [`.github/skills/`](.github/skills/) · [`.github/agents/`](.github/agents/) · PR [#4](https://github.com/rubenaoz/taskflow-copilot-rubenaoz/pull/4) (Closes #2)
+- **Cómo se comprueba:**
+  - Rompí a propósito el frontmatter YAML de una skill (borrando su primera línea) y confirmé que `copilot skill list` dejaba de listarla con el error exacto `missing or malformed YAML frontmatter`. La repuse y volvió a cargar.
+
+    ![Skill con frontmatter roto, detectado por copilot skill list](evidencia/dia4/skill-frontmatter-roto.png)
+
+  - La skill `crear-endpoint-taskflow` implementó el endpoint completo (DTO, mapper, service, controller, 2 clases de test), corrigiendo sola un error de validación que ella misma detectó al correr `mvn -q test`. Resultado: 77 tests, `BUILD SUCCESS`, 7.88 créditos.
+
+    ![La skill implementando el endpoint end-to-end](evidencia/dia4/skill-implementa-endpoint.png)
+
+  - Confirmé que `verificar-taskflow` la ejecutó el **agente**, no que dijera que la ejecutó: el transcript muestra `<shellId: 0 completed with exit code 0>` real, y `RESULTADO: 8/8 OK`.
+
+    ![La skill de verificación corrida de verdad por el agente](evidencia/dia4/skill-verificar-ejecutada.png)
+
+  - El agente `revisor` tiene su lista `tools` restringida a solo lectura en su propio archivo `.agent.md`. Le pedí explícitamente que editara código —incluso con `--allow-all-tools` en la sesión— y no pudo: `git status --porcelain` quedó vacío después. La cerca la pone la definición del agente, no los permisos de la sesión.
+
+    ![El revisor no edita nada pese a --allow-all-tools](evidencia/dia4/revisor-no-edita.png)
+
+  - Planté un bug a mano en `ProjectService.java` (una regla de "vencida" escrita mal, que no excluye tareas `DONE`) y corrí `mvn test` y `verificar.ps1`: mi test suite sí lo atrapó (`Failures: 1`, `BUILD FAILURE`) — mejor resultado que el ensayo oficial de la guía, donde el bug pasaba en verde.
+
+    ![El bug plantado a mano es atrapado por la suite](evidencia/dia4/bug-plantado-detectado.png)
+
+  - Con un usuario IAM `mcp-readonly` (solo `ViewOnlyAccess`), un agente auditó mi cuenta de AWS y encontró 3 recursos vivos de la Semana 5. Confirmé el control de solo lectura intentando crear un bucket S3 con la misma cuenta: `AccessDenied`. El resultado se guardó con el número de cuenta enmascarado como `<cuenta>` antes de comitear.
+
+    ![Auditoría de AWS con la cuenta enmascarada](evidencia/dia4/aws-resultado-enmascarado.png)
+
+  - El PR #4 se fusionó a `main`, cerrando el issue #2 automáticamente, y `copilot skill list` en `main` después del merge muestra las tres skills del proyecto.
+
+    ![PR mergeado, issue cerrado](evidencia/dia4/pr-mergeado.png)
+
+  - Evidencia adicional en texto: [`summary-sesion.md`](evidencia/dia4/summary-sesion.md) · [`verificar.txt`](evidencia/dia4/verificar.txt) · [`revision.md`](evidencia/dia4/revision.md) · [`revisor-no-edita.md`](evidencia/dia4/revisor-no-edita.md) · [`tester-sesion.md`](evidencia/dia4/tester-sesion.md) · [`aws-resultado.txt`](evidencia/dia4/aws-resultado.txt)
+
+- **Qué no salió:** dos veces mergeé el PR **antes** de pedir la revisión de Copilot en lugar de después (Día 2 y Día 4) — el orden correcto es al revés, aunque no afectó el resultado. También tuve que corregir `git push -u origin dia4-equipo` porque la rama no existía localmente (el commit había quedado en `main`); lo resolví con `git branch dia4-equipo` antes del push. La llave de AWS `mcp-readonly` se borró correctamente del lado de AWS y del perfil local de mi laptop al cerrar la sesión, siguiendo el checklist de limpieza.
