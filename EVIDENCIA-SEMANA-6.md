@@ -128,3 +128,35 @@
   - Evidencia adicional en texto: [`summary-sesion.md`](evidencia/dia4/summary-sesion.md) · [`verificar.txt`](evidencia/dia4/verificar.txt) · [`revision.md`](evidencia/dia4/revision.md) · [`revisor-no-edita.md`](evidencia/dia4/revisor-no-edita.md) · [`tester-sesion.md`](evidencia/dia4/tester-sesion.md) · [`aws-resultado.txt`](evidencia/dia4/aws-resultado.txt)
 
 - **Qué no salió:** dos veces mergeé el PR **antes** de pedir la revisión de Copilot en lugar de después (Día 2 y Día 4) — el orden correcto es al revés, aunque no afectó el resultado. También tuve que corregir `git push -u origin dia4-equipo` porque la rama no existía localmente (el commit había quedado en `main`); lo resolví con `git branch dia4-equipo` antes del push. La llave de AWS `mcp-readonly` se borró correctamente del lado de AWS y del perfil local de mi laptop al cerrar la sesión, siguiendo el checklist de limpieza.
+## Día 5 · VS Code y proyecto final
+
+- **Qué construí:** abrí el mismo repo en VS Code con sesión de GitHub, probé el autocompletado (texto fantasma) y el chat en modo Ask y Agent, confirmé que `.github/` (instrucciones, skills, agentes) se carga igual que en la CLI sin configurar nada, y usé MCP desde VS Code. Por la tarde, el proyecto final: `GET /reports/progress`, de la spec al PR mergeado, usando exactamente el mismo equipo de `.github/` (skill, revisor, tester) construido el jueves.
+- **Dónde está:** [`specs/progress.md`](specs/progress.md) · [`semana6/README.md`](semana6/README.md) · PR [#5](https://github.com/rubenaoz/taskflow-copilot-rubenaoz/pull/5)
+- **Cómo se comprueba:**
+  - El texto fantasma para `porPrioridadPorFecha` reutilizó correctamente `TaskOrders.POR_FECHA` (no inventó un comparador propio) — lo descarté de todas formas para no dejar código sin revisar.
+
+    ![Texto fantasma reutilizando TaskOrders.POR_FECHA](evidencia/dia5/ghost-text-taskservice.png)
+
+  - En modo Ask, le pedí que explicara `Task.estaVencida()` citando archivo y línea; comprobé las 5 citas con `Get-ChildItem | Select-String` fuera del chat — las cinco eran exactas.
+
+    ![Modo Ask con citas verificadas](evidencia/dia5/ask-mode-citas.png)
+
+  - En modo Agent, le pedí correr `mvn -q test` sin modificar nada. Reportó 2 tests en rojo (`SecurityRulesTest`) — resultó ser un problema de caché de compilación (clases viejas en `target/`, no un bug real): con `mvn clean test` la suite completa pasó, 79 tests, sin tocar ningún archivo de producción.
+
+    ![Bug de caché de compilación resuelto sin tocar código](evidencia/dia5/agent-mode-bug-resuelto.png)
+
+  - El agente `revisor` (el mismo del jueves) respondió "No puedo modificar archivos en esta sesión" al pedirle un cambio en VS Code — la restricción de su lista `tools` se respeta igual en el editor que en la CLI. `git status --porcelain` confirmó que no tocó nada.
+
+    ![El revisor confirma que no puede editar, también en VS Code](evidencia/dia5/revisor-no-edita-vscode.png)
+
+  - Los tres servidores MCP del miércoles (`taskflow`, `playwright`, `aws-knowledge`) se registran en `.vscode/mcp.json` — un archivo distinto al de la CLI, pero mismos servidores. Confirmé `taskflow` "Running" con sus 3 herramientas directamente en el panel del editor, y usé el chat de VS Code para listar tareas vencidas, verificado después por REST.
+
+    ![Servidor taskflow corriendo dentro de VS Code](evidencia/dia5/mcp-vscode-running.png)
+
+  - **Proyecto final** — elegí `GET /reports/progress` (porcentaje de avance por proyecto). La skill lo implementó (81 tests, `BUILD SUCCESS`, 7.77 créditos), el `revisor` dio `APROBADO` con solo 3 sugerencias de estilo, y el checklist de verificación REST cerró en `RESULTADO: 12/12 OK`. Copilot code review dejó 2 comentarios en el PR — los mismos que ya había visto antes en el checklist del jueves: uno cierto (rutas protegidas sin cubrir en `SecurityRulesTest`) y otro que señalaba campos faltantes en el slice test — ambos aplicados correctamente antes del merge.
+
+    ![Comentarios de Copilot code review en el proyecto final](evidencia/dia5/copilot-review-proyecto-final.png)
+
+  - Evidencia adicional en texto: [`semana6/sesion-implementacion.md`](semana6/sesion-implementacion.md) · [`semana6/revision.md`](semana6/revision.md) · [`semana6/code-review.md`](semana6/code-review.md) · [`semana6/proyecto-final.diff`](semana6/proyecto-final.diff)
+
+- **Qué no salió:** el commit `"test: casos REST de <feature> en verificar.ps1"` quedó con el placeholder `<feature>` literal sin reemplazar por `progress` — un descuido de copiar/pegar el comando sin editarlo; no afectó el contenido del commit, solo su mensaje. También reincidí en mergear el PR antes de pedir la revisión de Copilot (mismo patrón del Día 2 y Día 4).
